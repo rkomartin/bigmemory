@@ -379,6 +379,44 @@ setMethod("[",
   signature(x = "big.matrix", i="missing", j="missing", drop = "logical"),
   function(x, drop) return(GetAll.bm(x, drop)))
 
+FastSetElements.bm <- function(x, i, j, value) {
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  if (is.null(tempi[[1]])) stop("Illegal row index usage in assignment.\n")
+  if (tempi[[1]]) i <- tempi[[2]]
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  if (is.null(tempj[[1]])) stop("Illegal column index usage in assignment.\n")
+  if (tempj[[1]]) j <- tempj[[2]]
+
+  totalts <- length(i) * length(j)
+
+  # If we are assigning from a matrix, make sure the dimensions agree.
+  if (is.matrix(value))
+  {
+    if (ncol(value) != length(j) | nrow(value) != length(i)) 
+    {
+      stop("Matrix dimensions do not agree with big.matrix instance set size.")
+    }
+  } else if (length(value) != totalts) {
+    # Otherwise, make sure we are assigning the correct number of things
+    # (rep if necessary)
+    numReps <- totalts / length(value)
+    if (numReps != round(numReps)) 
+    {
+      stop(paste("number of items to replace is not a multiple of",
+                 "replacement length"))
+    }
+  }
+  
+  if (typeof(x) == 'double') {
+    .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
+          as.double(value))
+  } else {
+    .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
+          as.integer(value))
+  }
+  return(x)
+}
+
 SetElements.bm <- function(x, i, j, value)
 {
   if (!is.numeric(i) & !is.character(i) & !is.logical(i))
