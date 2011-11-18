@@ -699,7 +699,7 @@ setMethod('[<-',
   function(x, value) return(SetAll.bm(x, value)))
 
 setMethod('typeof', signature(x="big.matrix"),
-  function(x) return(.Call('GetTypeString', x@address)), PACKAGE = "bigmemory")
+  function(x) return(.Call('GetTypeString', x@address, PACKAGE = "bigmemory")))
 
 setMethod('head', signature(x="big.matrix"),
   function(x, n = 6) {
