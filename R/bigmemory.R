@@ -390,22 +390,22 @@ FastSetElements.bm <- function(x, i, j, value) {
   totalts <- length(i) * length(j)
 
   # If we are assigning from a matrix, make sure the dimensions agree.
-  if (is.matrix(value))
-  {
-    if (ncol(value) != length(j) | nrow(value) != length(i)) 
-    {
-      stop("Matrix dimensions do not agree with big.matrix instance set size.")
-    }
-  } else if (length(value) != totalts) {
-    # Otherwise, make sure we are assigning the correct number of things
-    # (rep if necessary)
-    numReps <- totalts / length(value)
-    if (numReps != round(numReps)) 
-    {
-      stop(paste("number of items to replace is not a multiple of",
-                 "replacement length"))
-    }
-  }
+#   if (is.matrix(value))
+#   {
+#     if (ncol(value) != length(j) | nrow(value) != length(i)) 
+#     {
+#       stop("Matrix dimensions do not agree with big.matrix instance set size.")
+#     }
+#   } else if (length(value) != totalts) {
+#     # Otherwise, make sure we are assigning the correct number of things
+#     # (rep if necessary)
+#     numReps <- totalts / length(value)
+#     if (numReps != round(numReps)) 
+#     {
+#       stop(paste("number of items to replace is not a multiple of",
+#                  "replacement length"))
+#     }
+#   }
   
   if (typeof(x) == 'double') {
     .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
