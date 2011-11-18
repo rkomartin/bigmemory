@@ -56,11 +56,11 @@ big.matrix <- function(nrow, ncol, type=options()$bigmemory.default.type,
   if (shared) {
     address <- .Call('CreateSharedMatrix', as.double(nrow),
                 as.double(ncol), as.character(colnames), as.character(rownames),
-                as.integer(typeVal), as.double(init), as.logical(separated))
+                as.integer(typeVal), as.double(init), as.logical(separated), PACKAGE = "bigmemory")
   } else {
     address <- .Call('CreateLocalMatrix', as.double(nrow),
                 as.double(ncol), as.character(colnames), as.character(rownames),
-                as.integer(typeVal), as.double(init), as.logical(separated))
+                as.integer(typeVal), as.double(init), as.logical(separated), PACKAGE = "bigmemory")
   }
   if (is.null(address)) {
     stop(paste("Error: memory could not be allocated for instance",
@@ -152,14 +152,14 @@ setMethod('as.big.matrix', signature(x='vector'),
   
 colnames.bm <- function(x)
 {
-  ret <- .Call("GetColumnNamesBM", x@address)
+  ret <- .Call("GetColumnNamesBM", x@address, PACKAGE = "bigmemory")
   if (length(ret)==0) return(NULL)
   return(ret)
 }
 
 rownames.bm <- function(x)
 {
-  ret <- .Call("GetRowNamesBM", x@address)
+  ret <- .Call("GetRowNamesBM", x@address, PACKAGE = "bigmemory")
   if (length(ret)==0) return(NULL)
   return(ret)
 }
@@ -178,7 +178,7 @@ assign('colnames.bm<-',
       }
       if (!is.null(value) & length(value) != ncol(x))
         stop("length of 'colnames' not equal to array extent.")
-      .Call("SetColumnNames", x@address, value)
+      .Call("SetColumnNames", x@address, value, PACKAGE = "bigmemory")
       return(x)
   })
 
@@ -196,15 +196,15 @@ assign('rownames.bm<-',
       }
       if (length(value) != nrow(x) & !is.null(value)) 
         stop("length of 'rownames' not equal to array extent.")
-      .Call("SetRowNames", x@address, value)
+      .Call("SetRowNames", x@address, value, PACKAGE = "bigmemory")
       return(x)
   })
 
 setMethod('ncol', signature(x="big.matrix"),
-  function(x) return(.Call("CGetNcol", x@address)))
+  function(x) return(.Call("CGetNcol", x@address, PACKAGE = "bigmemory")))
 
 setMethod('nrow', signature(x="big.matrix"), 
-  function(x) return(.Call("CGetNrow", x@address)))
+  function(x) return(.Call("CGetNrow", x@address, PACKAGE = "bigmemory")))
 
 setMethod('dim', signature(x="big.matrix"),
   function(x) return(c(nrow(x), ncol(x))))
@@ -236,14 +236,14 @@ GetElements.bm <- function(x, i, j, drop=TRUE)
     j <- which(j)
   }
 
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
   if (is.null(tempi[[1]])) stop("Illegal row index usage in extraction.\n")
   if (tempi[[1]]) i <- tempi[[2]]
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
   if (is.null(tempj[[1]])) stop("Illegal column index usage in extraction.\n")
   if (tempj[[1]]) j <- tempj[[2]]
 
-  retList <- .Call("GetMatrixElements", x@address, as.double(j), as.double(i))
+  retList <- .Call("GetMatrixElements", x@address, as.double(j), as.double(i), PACKAGE = "bigmemory")
 
   dimnames(retList[[1]]) <- list( retList[[2]], retList[[3]] )
   if (drop) {
@@ -274,11 +274,11 @@ GetCols.bm <- function(x, j, drop=TRUE)
     j <- which(j)
   }
 
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
   if (is.null(tempj[[1]])) stop("Illegal column index usage in extraction.\n")
   if (tempj[[1]]) j <- tempj[[2]]
 
-  retList <- .Call("GetMatrixCols", x@address, as.double(j))
+  retList <- .Call("GetMatrixCols", x@address, as.double(j), PACKAGE = "bigmemory")
 
   dimnames(retList[[1]]) <- list( retList[[2]], retList[[3]] )
   if (drop) {
@@ -307,11 +307,11 @@ GetRows.bm <- function(x, i, drop=TRUE)
       stop("row vector length must match the number of rows of the matrix.")
     i <- which(i)
   }
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
   if (is.null(tempi[[1]])) stop("Illegal row index usage in extraction.\n")
   if (tempi[[1]]) i <- tempi[[2]]
 
-  retList <- .Call("GetMatrixRows", x@address, as.double(i))
+  retList <- .Call("GetMatrixRows", x@address, as.double(i), PACKAGE = "bigmemory")
 
   dimnames(retList[[1]]) <- list( retList[[2]], retList[[3]] )
   if (drop) {
@@ -330,7 +330,7 @@ GetRows.bm <- function(x, i, drop=TRUE)
 
 GetAll.bm <- function(x, drop=TRUE)
 {
-  retList <- .Call("GetMatrixAll", x@address)
+  retList <- .Call("GetMatrixAll", x@address, PACKAGE = "bigmemory")
 
   dimnames(retList[[1]]) <- list( retList[[2]], retList[[3]] )
   if (drop) {
@@ -380,10 +380,10 @@ setMethod("[",
   function(x, drop) return(GetAll.bm(x, drop)))
 
 FastSetElements.bm <- function(x, i, j, value) {
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
   if (is.null(tempi[[1]])) stop("Illegal row index usage in assignment.\n")
   if (tempi[[1]]) i <- tempi[[2]]
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
   if (is.null(tempj[[1]])) stop("Illegal column index usage in assignment.\n")
   if (tempj[[1]]) j <- tempj[[2]]
 
@@ -409,10 +409,10 @@ FastSetElements.bm <- function(x, i, j, value) {
   
   if (typeof(x) == 'double') {
     .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
-          as.double(value))
+          as.double(value), PACKAGE = "bigmemory")
   } else {
     .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
-          as.integer(value))
+          as.integer(value), PACKAGE = "bigmemory")
   }
   return(x)
 }
@@ -441,10 +441,10 @@ SetElements.bm <- function(x, i, j, value)
     j <- which(j)
   }
 
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
   if (is.null(tempi[[1]])) stop("Illegal row index usage in assignment.\n")
   if (tempi[[1]]) i <- tempi[[2]]
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
   if (is.null(tempj[[1]])) stop("Illegal column index usage in assignment.\n")
   if (tempj[[1]]) j <- tempj[[2]]
 
@@ -487,10 +487,10 @@ SetElements.bm <- function(x, i, j, value)
   # Note: we pass doubles as doubles, but anything else as integers.
   if (typeof(x) == 'double') {
     .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
-          as.double(value))
+          as.double(value), PACKAGE = "bigmemory")
   } else {
     .Call("SetMatrixElements", x@address, as.double(j), as.double(i), 
-          as.integer(value))
+          as.integer(value), PACKAGE = "bigmemory")
   }
   return(x)
 }
@@ -509,7 +509,7 @@ SetCols.bm <- function(x, j, value)
     j <- which(j)
   }
 
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)))
+  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
   if (is.null(tempj[[1]])) stop("Illegal column index usage in extraction.\n")
   if (tempj[[1]]) j <- tempj[[2]]
 
@@ -551,11 +551,11 @@ SetCols.bm <- function(x, j, value)
   # Note: we pass doubles as doubles, but anything else as integers.
   if (typeof(x) == 'double') 
   {
-    .Call("SetMatrixCols", x@address, as.double(j), as.double(value))
+    .Call("SetMatrixCols", x@address, as.double(j), as.double(value), PACKAGE = "bigmemory")
   } 
   else 
   {
-    .Call("SetMatrixCols", x@address, as.double(j), as.integer(value))
+    .Call("SetMatrixCols", x@address, as.double(j), as.integer(value), PACKAGE = "bigmemory")
   }
   return(x)
 }
@@ -573,7 +573,7 @@ SetRows.bm <- function(x, i, value)
     i <- which(i)
   }
 
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)))
+  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
   if (is.null(tempi[[1]])) stop("Illegal row index usage in extraction.\n")
   if (tempi[[1]]) i <- tempi[[2]]
 
@@ -621,11 +621,11 @@ SetRows.bm <- function(x, i, value)
   }
   # Note: we pass doubles as doubles, but anything else as integers.
   if (typeof(x) == 'double') {
-    .Call("SetMatrixRows", x@address, as.double(i), as.double(value))
+    .Call("SetMatrixRows", x@address, as.double(i), as.double(value), PACKAGE = "bigmemory")
   } 
   else 
   {
-    .Call("SetMatrixRows", x@address, as.double(i), as.integer(value))
+    .Call("SetMatrixRows", x@address, as.double(i), as.integer(value), PACKAGE = "bigmemory")
   }
   return(x)
 }
@@ -673,11 +673,11 @@ SetAll.bm <- function(x, value)
   # Note: we pass doubles as doubles, but anything else as integers.
   if (typeof(x) == 'double') 
   {
-    .Call("SetMatrixAll", x@address, as.double(value))
+    .Call("SetMatrixAll", x@address, as.double(value), PACKAGE = "bigmemory")
   } 
   else 
   {
-    .Call("SetMatrixAll", x@address, as.integer(value))
+    .Call("SetMatrixAll", x@address, as.integer(value), PACKAGE = "bigmemory")
   }
   return(x)
 }
@@ -699,7 +699,7 @@ setMethod('[<-',
   function(x, value) return(SetAll.bm(x, value)))
 
 setMethod('typeof', signature(x="big.matrix"),
-  function(x) return(.Call('GetTypeString', x@address)))
+  function(x) return(.Call('GetTypeString', x@address)), PACKAGE = "bigmemory")
 
 setMethod('head', signature(x="big.matrix"),
   function(x, n = 6) {
@@ -879,12 +879,12 @@ mwhich.internal <- function(x, cols, vals, comps, op, whichFuncName)
   if (whichFuncName == 'MWhichBigMatrix')
     ret = .Call(whichFuncName, x@address, as.double(testCol), 
                 as.double(minVal), as.double(maxVal), 
-                as.integer(chkmin), as.integer(chkmax), as.integer(opVal))
+                as.integer(chkmin), as.integer(chkmax), as.integer(opVal), PACKAGE = "bigmemory")
   else
     ret = .Call(whichFuncName, x, nrow(x),
                 as.double(testCol), 
                 as.double(minVal), as.double(maxVal), 
-                as.integer(chkmin), as.integer(chkmax), as.integer(opVal))
+                as.integer(chkmin), as.integer(chkmax), as.integer(opVal), PACKAGE = "bigmemory")
 
   return(ret)
 }
@@ -986,7 +986,7 @@ setMethod('read.big.matrix', signature(filename='character'),
                     "based on the first line of data."))
     }
 
-    lineCount <- .Call("CCountLines", filename) - skip - headerOffset
+    lineCount <- .Call("CCountLines", filename, PACKAGE = "bigmemory") - skip - headerOffset
     numRows <- lineCount
     createCols <- numCols
     if (is.numeric(extraCols)) createCols <- createCols + extraCols
@@ -1007,7 +1007,7 @@ setMethod('read.big.matrix', signature(filename='character'),
     .Call('ReadMatrix', filename, bigMat@address, 
           as.integer(skip+headerOffset), as.double(numRows), 
           as.double(numCols), as.character(sep), as.logical(has.row.names),
-          as.logical(!ignore.row.names))
+          as.logical(!ignore.row.names), PACKAGE = "bigmemory")
 
     return(bigMat)
   })
@@ -1023,23 +1023,23 @@ setMethod('write.big.matrix', signature(x='big.matrix',filename='character'),
       stop("You must set the row names before writing.\n")
     if (is.character(col.names))
       stop("You must set the column names before writing.\n")
-    if (row.names & !.Call("HasRowColNames",x@address)[1]) {
+    if (row.names & !.Call("HasRowColNames",x@address, PACKAGE = "bigmemory")[1]) {
       row.names <- FALSE
       warning("No row names exist, overriding your row.names option.\n")
     }
-    if (col.names & !.Call("HasRowColNames",x@address)[2]) {
+    if (col.names & !.Call("HasRowColNames",x@address, PACKAGE = "bigmemory")[2]) {
       col.names <- FALSE
       warning("No column names exist, overriding your col.names option.\n")
     }
     .Call('WriteMatrix', x@address, filename, as.logical(row.names), 
-      as.logical(col.names), sep)
+      as.logical(col.names), sep, PACKAGE = "bigmemory")
     invisible(NULL)
   })
 
 setGeneric('is.separated', function(x) standardGeneric('is.separated'))
 
 setMethod('is.separated', signature(x='big.matrix'),
-  function(x) return(.Call("IsSeparated", x@address)))
+  function(x) return(.Call("IsSeparated", x@address, PACKAGE = "bigmemory")))
 
 cleanupcols <- function(cols=NULL, nc=NULL, colnames=NULL) {
   if (is.null(cols)) cols <- 1:nc
@@ -1055,7 +1055,7 @@ cleanupcols <- function(cols=NULL, nc=NULL, colnames=NULL) {
                    "columns of the matrix."))
       cols <- which(cols)
     }
-    tempj <- .Call("CCleanIndices", as.double(cols), as.double(nc))
+    tempj <- .Call("CCleanIndices", as.double(cols), as.double(nc), PACKAGE = "bigmemory")
     if (is.null(tempj[[1]])) stop("Illegal column index usage in extraction.\n")
     if (tempj[[1]]) cols <- tempj[[2]]
   }
@@ -1076,7 +1076,7 @@ cleanuprows <- function(rows=NULL, nr=NULL, rownames=NULL) {
                    "rows of the matrix."))
       rows <- which(rows)
     }
-    tempj <- .Call("CCleanIndices", as.double(rows), as.double(nr))
+    tempj <- .Call("CCleanIndices", as.double(rows), as.double(nr), PACKAGE = "bigmemory")
     if (is.null(tempj[[1]])) stop("Illegal row index usage in extraction.\n")
     if (tempj[[1]]) rows <- tempj[[2]]
   }
@@ -1107,7 +1107,7 @@ deepcopy <- function(x, cols=NULL, rows=NULL,
   }
   if (is.big.matrix(x) && is.big.matrix(y))
     .Call("CDeepCopy", x@address, y@address, as.double(rows), as.double(cols), 
-      getOption("bigmemory.typecast.warning"))
+      getOption("bigmemory.typecast.warning"), PACKAGE = "bigmemory")
   else
     for (i in 1:length(cols)) y[,i] <- x[rows,cols[i]]
 
@@ -1121,7 +1121,7 @@ setGeneric('is.sub.big.matrix', function(x)
 	standardGeneric('is.sub.big.matrix'))
 
 setMethod('is.sub.big.matrix', signature(x='big.matrix'),
-  function(x) return(.Call('CIsSubMatrix', x@address)) )
+  function(x) return(.Call('CIsSubMatrix', x@address), PACKAGE = "bigmemory") )
 
 # For now a submatrix only goes over a range of columns and a range
 # of row.  This could be made more sophiticated but it would probably
@@ -1155,10 +1155,10 @@ setMethod('sub.big.matrix', signature(x='big.matrix.descriptor'),
     }
     .Call("SetRowOffsetInfo", rbm@address, 
           as.double(rowOffset + .Call("GetRowOffset", rbm@address)), 
-          as.double(numRows) )
+          as.double(numRows), PACKAGE = "bigmemory")
     .Call("SetColumnOffsetInfo", rbm@address, 
           as.double(colOffset + .Call("GetColOffset", rbm@address)),
-          as.double(numCols))
+          as.double(numCols), PACKAGE = "bigmemory")
     return(rbm)
   })
 
@@ -1216,7 +1216,7 @@ filebacked.big.matrix <- function(nrow, ncol,
 	address <- .Call('CreateFileBackedBigMatrix', as.character(backingfile), 
     as.character(backingpath), as.double(nrow), as.double(ncol), 
     as.character(colnames), as.character(rownames), as.integer(typeVal), 
-    as.double(init), as.logical(separated))
+    as.double(init), as.logical(separated), PACKAGE = "bigmemory")
   if (is.null(address))
   {
     stop("Error encountered when creating instance of type big.matrix")
@@ -1251,10 +1251,10 @@ DescribeBigMatrix = function(x)
     if (is.shared(x)) {
       ret <- list(sharedType = 'SharedMemory',
                   sharedName = shared.name(x), 
-                  totalRows = .Call("GetTotalRows", x@address),
-                  totalCols = .Call("GetTotalColumns", x@address),
-                  rowOffset = .Call("GetRowOffset", x@address),
-                  colOffset = .Call("GetColOffset", x@address),
+                  totalRows = .Call("GetTotalRows", x@address, PACKAGE = "bigmemory"),
+                  totalCols = .Call("GetTotalColumns", x@address, PACKAGE = "bigmemory"),
+                  rowOffset = .Call("GetRowOffset", x@address, PACKAGE = "bigmemory"),
+                  colOffset = .Call("GetColOffset", x@address, PACKAGE = "bigmemory"),
                   nrow=nrow(x), ncol=ncol(x),
                   rowNames=rownames(x), colNames=colnames(x), type=typeof(x), 
                   separated=is.separated(x))
@@ -1266,10 +1266,10 @@ DescribeBigMatrix = function(x)
   {
     ret = list(sharedType='FileBacked',
                filename=file.name(x),
-               totalRows = .Call("GetTotalRows", x@address),
-               totalCols = .Call("GetTotalColumns", x@address),
-               rowOffset = .Call("GetRowOffset", x@address),
-               colOffset = .Call("GetColOffset", x@address),
+               totalRows = .Call("GetTotalRows", x@address, PACKAGE = "bigmemory"),
+               totalCols = .Call("GetTotalColumns", x@address, PACKAGE = "bigmemory"),
+               rowOffset = .Call("GetRowOffset", x@address, PACKAGE = "bigmemory"),
+               colOffset = .Call("GetColOffset", x@address, PACKAGE = "bigmemory"),
                nrow=nrow(x), ncol=ncol(x),
                rowNames=rownames(x), colNames=colnames(x), type=typeof(x), 
                separated=is.separated(x))
@@ -1345,7 +1345,7 @@ setMethod('attach.resource', signature(obj='big.matrix.descriptor'),
     {
       address <- .Call('CAttachSharedBigMatrix', info$sharedName, 
         info$totalRows, info$totalCols, as.character(info$rowNames), 
-        as.character(info$colNames), as.integer(typeLength), info$separated)
+        as.character(info$colNames), as.integer(typeLength), info$separated, PACKAGE = "bigmemory")
     }
     else
     {
@@ -1369,12 +1369,12 @@ setMethod('attach.resource', signature(obj='big.matrix.descriptor'),
       address <- .Call('CAttachFileBackedBigMatrix', 
         info$filename, path, info$totalRows, info$totalCols, 
         as.character(info$rowNames), as.character(info$colNames), 
-        as.integer(typeLength), info$separated)
+        as.integer(typeLength), info$separated, PACKAGE = "bigmemory")
     }
     if (!is.null(address)) 
     {
-      .Call("SetRowOffsetInfo", address, info$rowOffset, info$nrow)
-      .Call("SetColumnOffsetInfo", address, info$colOffset, info$ncol)
+      .Call("SetRowOffsetInfo", address, info$rowOffset, info$nrow, PACKAGE = "bigmemory")
+      .Call("SetColumnOffsetInfo", address, info$colOffset, info$ncol, PACKAGE = "bigmemory")
       ans <- new('big.matrix', address=address)
     }
     else 
@@ -1387,12 +1387,12 @@ setMethod('attach.resource', signature(obj='big.matrix.descriptor'),
 setGeneric('is.filebacked', function(x) standardGeneric('is.filebacked'))
 
 setMethod('is.filebacked', signature(x='big.matrix'),
-  function(x) return(.Call("IsFileBackedBigMatrix", x@address)))
+  function(x) return(.Call("IsFileBackedBigMatrix", x@address, PACKAGE = "bigmemory")))
 
 setGeneric('shared.name', function(x) standardGeneric('shared.name'))
 
 setMethod('shared.name', signature(x='big.matrix'),
-  function(x) return(.Call('SharedName', x@address)))
+  function(x) return(.Call('SharedName', x@address, PACKAGE = "bigmemory")))
 
 setGeneric('file.name', function(x) standardGeneric('file.name'))
 
@@ -1403,7 +1403,7 @@ setMethod('file.name', signature(x='big.matrix'),
     {
       stop("The argument is not a file backed big.matrix.")
     }
-    return(.Call('FileName', x@address))
+    return(.Call('FileName', x@address, PACKAGE = "bigmemory"))
   })
 
 transpose.big.matrix <- function(x, backingfile=NULL,
@@ -1431,13 +1431,13 @@ setMethod('flush', signature(con='big.matrix'),
       warning("You cannot call flush on a non-filebacked big.matrix")
       return(invisible(TRUE))
     }
-    return(invisible(.Call("Flush", con@address)))
+    return(invisible(.Call("Flush", con@address, PACKAGE = "bigmemory")))
   })
 
 setGeneric('is.shared', function(x) standardGeneric('is.shared'))
 
 setMethod('is.shared', signature(x='big.matrix'),
-  function(x) return(.Call("IsShared", x@address)))
+  function(x) return(.Call("IsShared", x@address, PACKAGE = "bigmemory")))
 
 morder <- function(x, cols, na.last=TRUE, decreasing = FALSE)
 {
@@ -1450,19 +1450,19 @@ morder <- function(x, cols, na.last=TRUE, decreasing = FALSE)
   if (class(x) == 'big.matrix')
   {
     return(.Call('OrderBigMatrix', x@address, as.double(cols), 
-      as.integer(na.last), as.logical(decreasing) ))
+      as.integer(na.last), as.logical(decreasing), PACKAGE = "bigmemory"))
   }
   else if (class(x) == 'matrix')
   {
     if (typeof(x) == 'integer')
     {
       return(.Call('OrderRIntMatrix', x, nrow(x), as.double(cols), 
-        as.integer(na.last), as.logical(decreasing) ))
+        as.integer(na.last), as.logical(decreasing), PACKAGE = "bigmemory"))
     }
     else if (typeof(x) == 'double')
     {
       return(.Call('OrderRNumericMatrix', x, nrow(x), as.double(cols), 
-        as.integer(na.last), as.logical(decreasing) ))
+        as.integer(na.last), as.logical(decreasing), PACKAGE = "bigmemory" ))
     }
     else
       stop("Unsupported matrix value type.")
@@ -1498,17 +1498,17 @@ mpermute <- function(x, order=NULL, cols=NULL, allow.duplicates=FALSE, ...)
 
   if (class(x) == 'big.matrix')
   {
-    .Call('ReorderBigMatrix', x@address, order)
+    .Call('ReorderBigMatrix', x@address, order, PACKAGE = "bigmemory")
   }
   else if (class(x) == 'matrix')
   {
     if (typeof(x) == 'integer')
     {
-      .Call('OrderRIntMatrix', x, nrow(x), ncol(x), order)
+      .Call('OrderRIntMatrix', x, nrow(x), ncol(x), order, PACKAGE = "bigmemory")
     }
     else if (typeof(x) == 'double')
     {
-      .Call('ReorderRNumericMatrix', x, nrow(x), ncol(x), order)
+      .Call('ReorderRNumericMatrix', x, nrow(x), ncol(x), order, PACKAGE = "bigmemory")
     }
     else
       stop("Unsupported matrix value type.")
@@ -1519,7 +1519,7 @@ mpermute <- function(x, order=NULL, cols=NULL, allow.duplicates=FALSE, ...)
 
 is.nil <- function(address) {
   if (class(address)!="externalptr") stop("address is not an externalptr.")
-  ans <- .Call("isnil", address)
+  ans <- .Call("isnil", address, PACKAGE = "bigmemory")
   return(ans)
 }
 
