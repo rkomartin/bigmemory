@@ -380,14 +380,14 @@ setMethod("[",
   function(x, drop) return(GetAll.bm(x, drop)))
 
 FastSetElements.bm <- function(x, i, j, value) {
-  tempi <- .Call("CCleanIndices", as.double(i), as.double(nrow(x)), PACKAGE = "bigmemory")
-  if (is.null(tempi[[1]])) stop("Illegal row index usage in assignment.\n")
-  if (tempi[[1]]) i <- tempi[[2]]
-  tempj <- .Call("CCleanIndices", as.double(j), as.double(ncol(x)), PACKAGE = "bigmemory")
-  if (is.null(tempj[[1]])) stop("Illegal column index usage in assignment.\n")
-  if (tempj[[1]]) j <- tempj[[2]]
-
-  totalts <- length(i) * length(j)
+#   tempi <- .Call("CCleanIndices", as.double(i), as.double(dim(x)[1]), PACKAGE = "bigmemory")
+#   if (is.null(tempi[[1]])) stop("Illegal row index usage in assignment.\n")
+#   if (tempi[[1]]) i <- tempi[[2]]
+#   tempj <- .Call("CCleanIndices", as.double(j), as.double(dim(x)[2]), PACKAGE = "bigmemory")
+#   if (is.null(tempj[[1]])) stop("Illegal column index usage in assignment.\n")
+#   if (tempj[[1]]) j <- tempj[[2]]
+# 
+#   totalts <- length(i) * length(j)
 
   # If we are assigning from a matrix, make sure the dimensions agree.
 #   if (is.matrix(value))
